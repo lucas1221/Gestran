@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-import { MatDialog } from "@angular/material/dialog"
-import { FormularioComponent } from './formulario/formulario.component';
-import { asLiteral } from '@angular/compiler/src/render3/view/util';
+import { MatDialog } from "@angular/material/dialog";
+import { FormularioComponent, Pessoa } from './formulario/formulario.component';
 import { FormControl } from '@angular/forms';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 @Component({
   selector: 'app-crud',
@@ -11,41 +11,63 @@ import { FormControl } from '@angular/forms';
 })
 export class CrudComponent implements OnInit {
 
-  constructor(private dialog: MatDialog) { }
-
-  filtro = new FormControl()
+  pessoas: Pessoa[] = [];
+  filtro = new FormControl('');
 
   displayedColumns: string[] = ['actions', 'nome', 'email', 'senha', 'cep', 'logradouro'];
+  dataSource = this.pessoas;
 
-  dataSource = [
-    { nome: "Teste1", email: "teste@email1.com", senha: "1234", cep: "80250104", logradouro: "Rua teste" }
-  ]
+  constructor(private dialog: MatDialog) { }
 
   ngOnInit(): void {
-    this.filtro.valueChanges.subscribe(valor => {
-      this.filtrar("")
-    })
+    this.filtro.valueChanges.pipe(
+      debounceTime(300),
+      distinctUntilChanged()
+    ).subscribe(value => this.filtrarPessoas(value));
   }
 
-  filtrar(arg: string) {
-    console.log("filtrando...") //não remover essa linha
+  filtrarPessoas(filtro: string) {
+    this.dataSource = this.pessoas.filter(pessoa => pessoa.nome.includes(filtro));
   }
 
   adicionar() {
-    this.dialog.open(FormularioComponent)
+    const dialogRef = this.dialog.open(FormularioComponent);
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.pessoas.push(result);
+        this.dataSource = [...this.pessoas];
+      }
+    });
   }
 
   editar(pessoa: Pessoa) {
-    this.dialog.open(FormularioComponent)
+    // Abre o diálogo de formulário com os dados da pessoa a ser editada
+    const dialogRef = this.dialog.open(FormularioComponent, {
+      data: pessoa
+    });
+  
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        // Encontra o índice da pessoa na lista de pessoas
+        const index = this.pessoas.indexOf(pessoa);
+        if (index >= 0) {
+          // Atualiza a pessoa na lista de pessoas
+          this.pessoas[index] = result;
+          this.dataSource = [...this.pessoas];
+        }
+      }
+    });
   }
+  
 
   remover(pessoa: Pessoa) {
-    if (!confirm("Deseja remover a pessoa ${pessoa.nome}")) return
-
-    alert("removido com sucesso!")
+    const index = this.pessoas.indexOf(pessoa);
+    if (index >= 0) {
+      this.pessoas.splice(index, 1);
+      this.dataSource = [...this.pessoas];
+    }
   }
 }
 
-class Pessoa {
-  constructor(nome: string,) { }
-}
+
