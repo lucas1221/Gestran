@@ -1,0 +1,28 @@
+.page-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    max-width: 600px;
+    margin: auto;
+  }
+  
+  table {
+    width: 100%;
+    margin-top: 20px;
+  
+    th, td {
+      text-align: left;
+      padding: 8px;
+    }
+  
+    tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+  }
+  
+  button {
+    margin-top: 20px;
+  }
+  
